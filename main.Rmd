@@ -1,0 +1,216 @@
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+df_11 = read.csv("data/2011_rentPoor.csv")
+df_16 = read.csv("data/2016_rentPoor.csv")
+df_21 = read.csv("data/2021_rentPoor.csv")
+```
+
+```{r}
+df_11 <- df_11 %>% 
+  rename("nTenantHH" = "v_CA11N_2288..Number.of.tenant.households.in.non.farm..non.reserve.private.dwellings",
+         "rentPoorP" = "v_CA11N_2290....of.tenant.households.spending.30..or.more.of.household.total.income.on.shelter.costs",
+         "subsidizedP" = "v_CA11N_2289....of.tenant.households.in.subsidized.housing",
+         "medianRent" = "v_CA11N_2291..Median.monthly.shelter.costs.for.rented.dwellings....",
+         "avgRent" = "v_CA11N_2292..Average.monthly.shelter.costs.for.rented.dwellings....",
+         "medIncome" = "v_CA11N_2389..Median.after.tax.income..",
+         "unemployed" = "v_CA11N_1996..Unemployed"
+         )
+```
+
+```{r}
+df_11$nTenantHH = as.numeric(df_11$nTenantHH)
+df_11$rentPoorP = as.numeric(df_11$rentPoorP)
+df_11$subsidizedP = as.numeric(df_11$subsidizedP)
+df_11$medianRent = as.numeric(df_11$medianRent)
+df_11$avgRent = as.numeric(df_11$avgRent)
+df_11$popDensity = NA
+df_11$medIncome = as.numeric(df_11$medIncome)
+df_11$unemployed = as.numeric(df_11$unemployed)
+
+df_11 = subset(df_11, select = -c(NHS.Non.Return.Rate))
+```
+
+```{r}
+df_16 <- df_16 %>% 
+  rename("nTenantHH" = "v_CA16_4897..Total...Tenant.households.in.non.farm..non.reserve.private.dwellings...25..sample.data",
+         "rentPoorP" = "v_CA16_4899....of.tenant.households.spending.30..or.more.of.its.income.on.shelter.costs",
+         "subsidizedP" = "v_CA16_4898....of.tenant.households.in.subsidized.housing",
+         "medianRent" = "v_CA16_4900..Median.monthly.shelter.costs.for.rented.dwellings....",
+         "avgRent" = "v_CA16_4901..Average.monthly.shelter.costs.for.rented.dwellings....",
+         "popDensity" = "v_CA16_406..Population.density.per.square.kilometre",
+         "medIncome" = "v_CA16_2213..Median.after.tax.income.in.2015.among.recipients....",
+         "unemployed" = "v_CA16_5606..Unemployed"
+         )
+```
+
+```{r}
+df_16$nTenantHH = as.numeric(df_16$nTenantHH)
+df_16$rentPoorP = as.numeric(df_16$rentPoorP)
+df_16$subsidizedP = as.numeric(df_16$subsidizedP)
+df_16$medianRent = as.numeric(df_16$medianRent)
+df_16$avgRent = as.numeric(df_16$avgRent)
+df_16$popDensity = as.numeric(df_16$popDensity)
+df_16$medIncome = as.numeric(df_16$medIncome)
+df_16$unemployed = as.numeric(df_16$unemployed)
+```
+
+```{r}
+df_21 <- df_21 %>% 
+  rename("nTenantHH" = "v_CA21_4313..Total...Tenant.households.in.non.farm..non.reserve.private.dwellings",
+         "rentPoorP" = "v_CA21_4315....of.tenant.households.spending.30..or.more.of.its.income.on.shelter.costs..55.",
+         "subsidizedP" = "v_CA21_4314....of.tenant.households.in.subsidized.housing..61.",
+         "medianRent" = "v_CA21_4317..Median.monthly.shelter.costs.for.rented.dwellings......59.",
+         "avgRent" = "v_CA21_4318..Average.monthly.shelter.costs.for.rented.dwellings......59.",
+         "popDensity" = "v_CA21_6..Population.density.per.square.kilometre",
+         "medIncome" = "v_CA21_566..Median.after.tax.income.in.2020.among.recipients....",
+         "unemployed" = "v_CA21_6501..Unemployed"
+         )
+```
+
+```{r}
+df_21$nTenantHH = as.numeric(df_21$nTenantHH)
+df_21$rentPoorP = as.numeric(df_21$rentPoorP)
+df_21$subsidizedP = as.numeric(df_21$subsidizedP)
+df_21$medianRent = as.numeric(df_21$medianRent)
+df_21$avgRent = as.numeric(df_21$avgRent)
+df_21$popDensity = as.numeric(df_21$popDensity)
+df_21$medIncome = as.numeric(df_21$medIncome)
+df_21$unemployed = as.numeric(df_21$unemployed)
+
+#df_21 = subset(df_21, select = -c(popDensity, medIncome))
+```
+
+```{r}
+df_11$year = 2011
+df_16$year = 2016
+df_21$year = 2021
+```
+
+```{r}
+df = rbind(df_11, df_16, df_21)
+```
+
+```{r}
+hist(df$nTenantHH,
+     main = "Distribution of rent poor tenant HHs per DA",
+     xlab = "rent poor HHs",
+     ylab = "Frequency",
+     col = "skyblue",
+     border = "black",
+     xlim = c(0, 1300)
+     )
+```
+
+```{r}
+hist(df$rentPoorP,
+     main = "Distribution of rent poor tenant HHs per DA",
+     xlab = "rent poor proportion",
+     ylab = "Frequency",
+     col = "skyblue",
+     border = "black"
+     )
+```
+
+```{r}
+df <- df %>%
+  mutate(province = ifelse(substr(GeoUID, 1, 2) == "35", 1, 0))
+```
+
+```{r}
+means = df %>% group_by(year, province) %>% summarize(mean_value = mean(rentPoorP, na.rm = TRUE))
+
+means$province <- factor(means$province, labels = c("Quebec", "Ontario"))
+
+ggplot(means, aes(x = year, y = mean_value, color = province, group = province)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "% Rent Poor", color = "Province") +
+  theme_minimal()
+
+rm(means)
+```
+
+```{r}
+means = df[df$nTenantHH>0, ] %>% group_by(year, province) %>% summarize(mean_value = mean(rentPoorP, na.rm = TRUE))
+
+means$province <- factor(means$province, labels = c("Quebec", "Ontario"))
+
+ggplot(means, aes(x = year, y = mean_value, color = province, group = province)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "% Rent Poor", color = "Province") +
+  theme_minimal()
+
+rm(means)
+```
+
+```{r}
+means_n = df %>% group_by(year, province) %>% summarize(mean_value = mean(nTenantHH, na.rm = TRUE))
+
+means_n$province <- factor(means_n$province, labels = c("Quebec", "Ontario"))
+
+ggplot(means_n, aes(x = year, y = mean_value, color = province, group = province)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "Tenant HHs", color = "Province") +
+  theme_minimal()
+
+rm(means_n)
+```
+
+```{r}
+means_n = df %>% group_by(year, province) %>% summarize(mean_value = mean(Population, na.rm = TRUE))
+
+means_n$province <- factor(means_n$province, labels = c("Quebec", "Ontario"))
+
+ggplot(means_n, aes(x = year, y = mean_value, color = province, group = province)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "Pop", color = "Province") +
+  theme_minimal()
+
+rm(means_n)
+```
+
+```{r}
+means_med = df %>% group_by(year, province) %>% summarize(mean_value = mean(medianRent, na.rm = TRUE))
+
+means_med$province <- factor(means_med$province, labels = c("Quebec", "Ontario"))
+
+ggplot(means_med, aes(x = year, y = mean_value, color = province, group = province)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "Median Rent", color = "Province") +
+  theme_minimal()
+
+rm(means_med)
+```
+
+```{r}
+df_did = df[df$year >= 2016, ]
+```
+
+```{r}
+df_did$year = factor(df_did$year)
+df_did$province = factor(df_did$province, labels = c("Quebec", "Ontario"))
+```
+
+```{r}
+y = lm(rentPoorP ~ year + province + year*province + Population + medianRent, data = df_did)
+summary(y)
+```
+
+```{r}
+y = lm(rentPoorP ~ year + province + year*province + Population + medianRent, data = df_did[df_did$nTenantHH > 0,])
+summary(y)
+```
+
+```{r}
+y = lm(rentPoorP ~ year + province + year*province + popDensity 
+       + medianRent + subsidizedP + unemployed, data = df_did[df_did$nTenantHH > 0,])
+summary(y)
+```
